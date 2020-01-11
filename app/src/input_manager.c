@@ -275,14 +275,19 @@ typedef struct {
 
 mtPos_t AgeOfMagicNormal[] =
 {
- {SDLK_q, 2231, 44},// "Upper right| home, quit..."},
+ {SDLK_BACKQUOTE, 2231, 44},// "Upper right| home, quit..."},
  {SDLK_SPACE, 1197, 990},// "middle screen bottom| confirm"},
  {SDLK_BACKSPACE, 2073, 1003},// "bottom right| process"},
- {SDLK_1, 1783, 966},// "skill 1"},
- {SDLK_2, 1968, 966},// "skill 2"},
- {SDLK_3, 2154, 966},// "skill 3"},
+ {SDLK_q, 1783, 966},// "skill 1"},
+ {SDLK_w, 1968, 966},// "skill 2"},
+ {SDLK_e, 2154, 966},// "skill 3"},
  {SDLK_a, 147, 784},// "auto"},
  {SDLK_s, 147, 633},// "speed"},
+ {SDLK_1, 1122, 251},// "target 1"},
+ {SDLK_2, 1331, 280},// "target 2"},
+ {SDLK_3, 1460, 288},// "target 3"},
+ {SDLK_4, 1601, 421},// "target 4"},
+ {SDLK_5, 1803, 417},// "target 5"},
 };
 #define AGE_OF_MAGIC_NORMAL_KEY_SIZE (sizeof(AgeOfMagicNormal)/sizeof(mtPos_t))
 
@@ -294,9 +299,9 @@ mtPos_t AgeOfMagicControl[] =
  {SDLK_4, 1601, 421},// "target 4"},
  {SDLK_5, 1803, 417},// "target 5"},
 };
-#define AGE_OF_MAGIC_CTL_KEY_SIZE (sizeof(AgeOfMagicNormal)/sizeof(mtPos_t))
+#define AGE_OF_MAGIC_CTL_KEY_SIZE (sizeof(AgeOfMagicControl)/sizeof(mtPos_t))
 
-void process_normal(int idx, struct input_manager *im)
+void process_table(int idx, struct input_manager *im, mtPos_t *gameMapping)
 {
     struct control_msg msg;
     struct control_msg *to;
@@ -304,8 +309,8 @@ void process_normal(int idx, struct input_manager *im)
     to->type = CONTROL_MSG_TYPE_INJECT_TOUCH_EVENT;
     to->inject_touch_event.pointer_id = POINTER_ID_MOUSE;
     to->inject_touch_event.position.screen_size = im->screen->frame_size;
-    to->inject_touch_event.position.point.x = AgeOfMagicNormal[idx].x;
-    to->inject_touch_event.position.point.y = AgeOfMagicNormal[idx].y;
+    to->inject_touch_event.position.point.x = gameMapping[idx].x;
+    to->inject_touch_event.position.point.y = gameMapping[idx].y;
     to->inject_touch_event.action = AMOTION_EVENT_ACTION_DOWN;
     to->inject_touch_event.pressure = 1.f;
     to->inject_touch_event.buttons = AMOTION_EVENT_BUTTON_PRIMARY;
@@ -318,10 +323,10 @@ void process_normal(int idx, struct input_manager *im)
         LOGW("Could not request 'inject keycode'");
     }
 
-    LOGI("Just press: x:%d y:%d keycode:%d",
-         AgeOfMagicNormal[idx].x,
-         AgeOfMagicNormal[idx].y,
-         AgeOfMagicNormal[idx].key);
+    LOGI("ProcessTable: x:%d y:%d keycode:%d",
+         gameMapping[idx].x,
+         gameMapping[idx].y,
+         gameMapping[idx].key);
 }
 
 void
@@ -334,6 +339,11 @@ input_manager_process_key(struct input_manager *im,
     bool ctrl = event->keysym.mod & (KMOD_LCTRL | KMOD_RCTRL);
     bool alt = event->keysym.mod & (KMOD_LALT | KMOD_RALT);
     bool meta = event->keysym.mod & (KMOD_LGUI | KMOD_RGUI);
+
+    bool down = event->type == SDL_KEYDOWN;
+    int action = down ? ACTION_DOWN : ACTION_UP;
+    bool repeat = event->repeat;
+    bool shift = event->keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT);
     SDL_Keycode keycode = event->keysym.sym;
 
     // use Cmd on macOS, Ctrl on other platforms
@@ -370,10 +380,14 @@ input_manager_process_key(struct input_manager *im,
 
     // capture all Ctrl events
     if (ctrl || cmd) {
-        bool down = event->type == SDL_KEYDOWN;
-        int action = down ? ACTION_DOWN : ACTION_UP;
-        bool repeat = event->repeat;
-        bool shift = event->keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT);
+        for (i = 0; i < AGE_OF_MAGIC_CTL_KEY_SIZE && down == true; i++) {
+          if (AgeOfMagicControl[i].key == keycode) {
+              LOGI("here3\r\n");
+              process_table(i, im, AgeOfMagicControl);
+              return;
+          }
+        }
+
         switch (keycode) {
             case SDLK_g:
                 // Ctrl+h on all platform, since Cmd+h is already captured by
@@ -486,9 +500,10 @@ input_manager_process_key(struct input_manager *im,
         return;
     }
 
-    for (i = 0; i < AGE_OF_MAGIC_NORMAL_KEY_SIZE; i++) {
+
+    for (i = 0; i < AGE_OF_MAGIC_NORMAL_KEY_SIZE && down == true; i++) {
         if (AgeOfMagicNormal[i].key == keycode) {
-            process_normal(i, im);
+            process_table(i, im, AgeOfMagicNormal);
             return;
         }
     }
