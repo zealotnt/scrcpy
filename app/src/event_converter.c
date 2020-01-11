@@ -78,6 +78,9 @@ bool
 convert_keycode(SDL_Keycode from, enum android_keycode *to, uint16_t mod,
                 bool prefer_text) {
     switch (from) {
+        MAP(SDLK_q,            AKEYCODE_VOLUME_UP);
+        MAP(SDLK_u,            AKEYCODE_VOLUME_DOWN);
+        MAP(SDLK_i,            AKEYCODE_VOLUME_UP);
         MAP(SDLK_RETURN,       AKEYCODE_ENTER);
         MAP(SDLK_KP_ENTER,     AKEYCODE_NUMPAD_ENTER);
         MAP(SDLK_ESCAPE,       AKEYCODE_ESCAPE);
