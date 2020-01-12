@@ -293,13 +293,58 @@ mtPos_t AgeOfMagicNormal[] =
 
 mtPos_t AgeOfMagicControl[] =
 {
- {SDLK_1, 1122, 251},// "target 1"},
- {SDLK_2, 1331, 280},// "target 2"},
- {SDLK_3, 1460, 288},// "target 3"},
- {SDLK_4, 1601, 421},// "target 4"},
- {SDLK_5, 1803, 417},// "target 5"},
+  {},
 };
 #define AGE_OF_MAGIC_CTL_KEY_SIZE (sizeof(AgeOfMagicControl)/sizeof(mtPos_t))
+
+#define SDLK_12 SDLK_0
+#define SDLK_11 SDLK_0
+#define SDLK_10 SDLK_0
+mtPos_t AgeOfMagicToH[] =
+{
+  {SDLK_12, 726, 382},// "ToH "},
+  {SDLK_11, 686, 536},// "ToH "},
+  {SDLK_10, 712, 672},// "ToH "},
+  {SDLK_9, 926, 532},// "ToH "},
+  {SDLK_8, 1092, 344},// "ToH "},
+  {SDLK_7, 1363, 323},// "ToH "},
+  {SDLK_6, 1674, 406},// "ToH "},
+  {SDLK_5, 1674, 596},// "ToH "},
+  {SDLK_4, 1527, 738},// "ToH "},
+  {SDLK_3, 1303, 857},// "ToH "},
+  {SDLK_2, 921, 812},// "ToH "},
+  {SDLK_1, 1265, 619},// "ToH "},
+};
+#define AGE_OF_MAGIC_TOH_KEY_SIZE (sizeof(AgeOfMagicToH)/sizeof(mtPos_t))
+
+
+void process_toh(struct input_manager *im)
+{
+    int idx;
+    LOGI("Process TOH\r\n");
+    for (idx = AGE_OF_MAGIC_TOH_KEY_SIZE; idx >= 0; idx--) {
+        struct control_msg msg;
+        struct control_msg *to;
+        to = &msg;
+        to->type = CONTROL_MSG_TYPE_INJECT_TOUCH_EVENT;
+        to->inject_touch_event.pointer_id = POINTER_ID_MOUSE;
+        to->inject_touch_event.position.screen_size = im->screen->frame_size;
+        to->inject_touch_event.position.point.x = AgeOfMagicToH[idx].x;
+        to->inject_touch_event.position.point.y = AgeOfMagicToH[idx].y;
+        to->inject_touch_event.action = AMOTION_EVENT_ACTION_DOWN;
+        to->inject_touch_event.pressure = 1.f;
+        to->inject_touch_event.buttons = AMOTION_EVENT_BUTTON_PRIMARY;
+        if (!controller_push_msg(im->controller, &msg)) {
+            LOGW("Could not request 'inject keycode'");
+        }
+
+        to->inject_touch_event.action = AMOTION_EVENT_ACTION_UP;
+        if (!controller_push_msg(im->controller, &msg)) {
+            LOGW("Could not request 'inject keycode'");
+        }
+        LOGI("\t Pressing ToH num %d\r\n", idx);
+    }
+}
 
 void process_table(int idx, struct input_manager *im, mtPos_t *gameMapping)
 {
@@ -489,6 +534,11 @@ input_manager_process_key(struct input_manager *im,
             case SDLK_r:
                 if (control && cmd && !shift && !repeat && down) {
                     rotate_device(controller);
+                }
+                return;
+            case SDLK_TAB:
+                if (!shift && cmd && !repeat && down) {
+                    process_toh(im);
                 }
                 return;
         }
